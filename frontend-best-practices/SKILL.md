@@ -73,18 +73,18 @@ window.removeEventListener('offline', () => this.handleOffline()); // 无法移�
 当监听需要贯穿整个 Service 生命周期时，使用框架提供的销毁钩子：
 
 ```ts
-// @tencent/workbench 框架：实现 OnDisable 接口
-import { Service, OnDisable } from '@tencent/workbench';
+// 通用框架示例：实现 OnDestroy/OnDisable 接口
+import { Injectable, OnDestroy } from '@angular/core';
 
-@Service()
-export class MyService implements OnDisable {
+@Injectable({ providedIn: 'root' })
+export class MyService implements OnDestroy {
   private readonly onHandler = () => this.handleSomething();
 
   constructor() {
     window.addEventListener('resize', this.onHandler);
   }
 
-  $onDisable() {
+  ngOnDestroy() {
     window.removeEventListener('resize', this.onHandler);
   }
 }

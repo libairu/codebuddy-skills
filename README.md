@@ -10,7 +10,6 @@
 | **[find-skills](./find-skills/)** | 发现和安装开源 Agent Skills | `find a skill for X`、`is there a skill that can...` |
 | **[frontend-best-practices](./frontend-best-practices/)** | 前端编码最佳实践（事件监听、生命周期管理等） | `addEventListener`、`事件监听`、`内存泄漏`、`useEffect cleanup` |
 | **[git-branch](./git-branch/)** | Git 分支管理规范工作流 | `新建分支`、`推送分支`、`rebase master` |
-| **[oci-deploy](./oci-deploy/)** | Orange CI 静态站点 COS+CDN 部署方案 | `OCI 部署`、`工蜂 CI`、`COS 部署` |
 | **[pagx](./pagx/)** | PAGX 文件生成与优化 | `create PAGX`、`optimize .pagx`、`pagx CLI` |
 
 ## 🚀 安装使用
@@ -47,8 +46,6 @@ codebuddy-skills/
 │   ├── references/
 │   └── scripts/
 ├── git-branch/           # Git 分支管理
-│   └── SKILL.md
-├── oci-deploy/           # OCI 部署方案
 │   └── SKILL.md
 └── pagx/                 # PAGX 生成与优化
     ├── SKILL.md
