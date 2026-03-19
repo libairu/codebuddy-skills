@@ -35,12 +35,16 @@ description: Git 分支管理规范工作流。当用户需要新建分支、推
 # 1. 同步远端 master（禁止跳过此步骤）
 git fetch origin master
 
-# 2. 基于远端 master 创建分支（无需切换到本地 master）
-git checkout -b <branch-name> origin/master
+# 2. 基于远端 master 创建分支（--no-track 防止自动追踪 origin/master）
+git checkout -b <branch-name> --no-track origin/master
 ```
 
+> ⚠️ **必须使用 `--no-track`**：不加此参数时，Git 会自动将 `origin/master`
+> 设为新分支的 upstream，导致后续 `git push` 出现歧义（推到 master 还是同名分支）。
+> upstream 应在首次推送时通过 `git push -u` 设置为远程同名分支。
+
 完成后告知用户：
-> 分支 `<branch-name>` 已基于最新 `origin/master` 创建
+> 分支 `<branch-name>` 已基于最新 `origin/master` 创建（未设置 upstream，首次推送时会自动设置）
 
 ---
 
@@ -89,18 +93,39 @@ git push -u origin <branch-name>
 
 ## 推送分支到远端
 
+### 核心原则
+
+**feature 分支的 upstream 必须指向远程同名分支，而非 master。**
+
+### 推送流程
+
 ```bash
 # 检查是否已有 upstream
-git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null
+UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
+```
 
-# 无 upstream：首次推送，自动创建远端分支并设置追踪
+**情况 A：无 upstream** — 首次推送，设置追踪
+
+```bash
 git push -u origin <current-branch>
+```
 
-# 有 upstream：直接推送
+**情况 B：upstream 指向同名远程分支**（如 `origin/feature/xxx`）— 直接推送
+
+```bash
 git push
 ```
 
-若推送被拒绝（远端有更新）：
+**情况 C：upstream 指向了错误分支**（如 `origin/master`）— 需要修正
+
+这种情况常见于创建分支时未加 `--no-track`，Git 自动将 `origin/master` 设为 upstream。
+此时用 `-u` 重新设置正确的 upstream：
+
+```bash
+git push -u origin <current-branch>
+```
+
+### 推送被拒绝（远端有更新）
 
 ```bash
 git pull --rebase origin <branch-name>
@@ -113,7 +138,7 @@ git push
 
 ```bash
 git fetch origin master
-GIT_LFS_SKIP_SMUDGE=1 git worktree add ../cocraft-<suffix> -b <branch-name> origin/master
+GIT_LFS_SKIP_SMUDGE=1 git worktree add ../cocraft-<suffix> -b <branch-name> --no-track origin/master
 ```
 
 worktree 场景同样询问分支名（走 Step 1 流程），suffix 默认取分支名去掉前缀部分（如 `feature/user-login` → suffix 为 `user-login`）。
@@ -144,3 +169,4 @@ git stash pop
 - 禁止基于本地旧分支直接 `checkout -b`（本地 master 可能落后远端）
 - 禁止跳过 `git fetch` 步骤
 - 禁止对 main/master 执行 force push
+- 禁止 `checkout -b <branch> origin/master` 不加 `--no-track`（会导致 upstream 错误指向 master）
