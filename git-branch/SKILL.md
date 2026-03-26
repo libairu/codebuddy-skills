@@ -147,17 +147,103 @@ worktree 场景同样询问分支名（走 Step 1 流程），suffix 默认取�
 
 ## Rebase 规范
 
-本地分支落后远端 master 时：
+### 标准流程（完整 5 步，缺一不可）
+
+#### Step 1：确认当前所在分支
+
+```bash
+git branch --show-current
+git status
+```
+
+> ⚠️ **必须确认当前分支是目标分支**，避免在错误分支上执行 rebase。
+> 如有未提交的变更，先提交或 stash（见下方"有未暂存变更"章节）。
+
+#### Step 2：同步远端当前分支最新代码
+
+```bash
+# 拉取远端同名分支的最新代码，基于最新本地状态再 rebase master
+CURRENT_BRANCH=$(git branch --show-current)
+git fetch origin $CURRENT_BRANCH
+git rebase origin/$CURRENT_BRANCH
+```
+
+> **为什么要先同步当前分支？**
+> 如果远端分支有其他人的提交（或自己在其他设备的提交），
+> 直接 rebase master 会导致这些提交丢失或产生重复提交。
+> 必须先把本地分支与远端同名分支对齐，再同步 master。
+
+#### Step 3：同步远端 master 最新代码
 
 ```bash
 git fetch origin master
+```
+
+#### Step 4：Rebase 前快照（防止文件静默丢失）
+
+```bash
+MERGE_BASE=$(git merge-base HEAD origin/master)
+git diff --name-status $MERGE_BASE HEAD > /tmp/rebase_before_files.txt
+echo "Rebase 前变更文件数: $(wc -l < /tmp/rebase_before_files.txt)"
+cat /tmp/rebase_before_files.txt
+```
+
+#### Step 5：执行 Rebase
+
+```bash
 git rebase origin/master
 ```
 
-有未暂存变更时先 stash：
+---
+
+### ⚠️ Rebase 后必做：完整性验证
+
+**rebase 完成后，立即执行验证，确保没有文件被静默丢失：**
+
+```bash
+# 1. 重新计算 merge-base（已更新）
+NEW_MERGE_BASE=$(git merge-base HEAD origin/master)
+git diff --name-status $NEW_MERGE_BASE HEAD > /tmp/rebase_after_files.txt
+
+# 2. 对比前后文件列表
+echo "=== Rebase 前变更文件 ==="
+cat /tmp/rebase_before_files.txt
+
+echo "=== Rebase 后变更文件 ==="
+cat /tmp/rebase_after_files.txt
+
+# 3. 找出丢失的文件（rebase 前有，rebase 后没有）
+echo "=== 疑似丢失的文件 ==="
+diff /tmp/rebase_before_files.txt /tmp/rebase_after_files.txt | grep "^<"
+```
+
+> 🚨 **如果发现有文件丢失**，立即停止，参考"Rebase 冲突文件丢失恢复"章节处理。
+
+### Rebase 冲突处理规范
+
+发生冲突时，**禁止在冲突解决后立即 `git rebase --continue`**，必须先核查：
+
+```bash
+# 查看冲突文件列表
+git status | grep "both modified\|deleted by"
+
+# 解决冲突后，核查 staged 文件是否完整（对比预期清单）
+git diff --cached --name-only
+
+# 确认无遗漏后再继续
+git rebase --continue
+```
+
+**最常见的静默丢失场景：**
+- 冲突解决时只 `git add` 了部分文件
+- 使用 IDE 的 "Accept Theirs/Ours" 按钮时，某些文件被意外 reset
+- 合并工具只展示了文本冲突文件，忽略了二进制或其他类型文件的变更
+
+### 有未暂存变更时先 stash
 
 ```bash
 git stash
+# 再按标准流程 Step 1～5 执行
 git rebase origin/master
 git stash pop
 ```
@@ -170,3 +256,5 @@ git stash pop
 - 禁止跳过 `git fetch` 步骤
 - 禁止对 main/master 执行 force push
 - 禁止 `checkout -b <branch> origin/master` 不加 `--no-track`（会导致 upstream 错误指向 master）
+- **禁止在 rebase 后不做文件完整性验证直接推送**（可能静默丢失文件修改）
+- **禁止冲突解决时使用 `git add .` 替代逐文件确认**（会掩盖遗漏文件的问题）
