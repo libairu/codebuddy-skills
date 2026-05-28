@@ -32,7 +32,7 @@ description: Git 分支管理规范工作流。当用户需要新建分支、推
 ### Step 2：同步远端并创建分支
 
 ```bash
-# 1. 同步远端 master（禁止跳过此步骤）
+# 1. 同步远端 master
 git fetch origin master
 
 # 2. 基于远端 master 创建分支（--no-track 防止自动追踪 origin/master）
@@ -40,28 +40,30 @@ git checkout -b <branch-name> --no-track origin/master
 ```
 
 > ⚠️ **必须使用 `--no-track`**：不加此参数时，Git 会自动将 `origin/master`
-> 设为新分支的 upstream，导致后续 `git push` 出现歧义（推到 master 还是同名分支）。
+> 设为新分支的 upstream，导致后续 `git push` 出现歧义。
 > upstream 应在首次推送时通过 `git push -u` 设置为远程同名分支。
+>
+> **此步骤无需用户确认，直接执行即可**（包括 fetch 和 checkout）。
 
 完成后告知用户：
-> 分支 `<branch-name>` 已基于最新 `origin/master` 创建（未设置 upstream，首次推送时会自动设置）
+> 分支 `<branch-name>` 已基于最新 `origin/master` 创建
 
 ---
 
-### Step 3（可选）：询问是否立即推送到远端
+### Step 3（可选）：推送到远端
 
-```
-问题：是否立即推送到远端？
-选项：
-  - 是，立即推送（git push -u origin <branch-name>）
-  - 否，稍后手动推送
-```
-
-若用户选择立即推送，执行：
+**当用户明确要求"提交并推送"、"push"等时，直接推送，无需询问确认。**
 
 ```bash
-git push -u origin <branch-name>
+# 有变更时先提交，再推送
+git add <files>
+git commit -m "<message>"
+git push --force-with-lease -u origin <branch-name>
 ```
+
+> 使用 `--force-with-lease` 而非 `--force`，避免意外覆盖他人推送的代码。
+
+仅在用户未明确提及推送、且上下文中无推送意图时，才询问是否立即推送。
 
 ---
 
@@ -96,6 +98,24 @@ git push -u origin <branch-name>
 ### 核心原则
 
 **feature 分支的 upstream 必须指向远程同名分支，而非 master。**
+
+> ⚠️ **禁止 amend + push 合并为链式命令执行！**
+>
+> `git commit --amend` 会修改本地 Git 历史（不可逆），如果与 `&& git push` 合并：
+> 1. shell 先执行完 amend（历史已修改）
+> 2. 再执行 push（用户此时才能审批）
+> 3. 用户拒绝 push → amend 已生效无法回滚
+>
+> **必须拆分为两条独立调用：**
+> ```bash
+> # 步骤1：amend（本地操作）
+> git add <files> && git commit --amend -m "msg"
+> # 步骤2：push（单独审批，requires_approval: true）
+> git push --force-with-lease
+> ```
+>
+> **普通 commit + push 可以合并**（commit 不修改历史，拒绝后无副作用）。
+> 但 **amend + push 必须拆分**。
 
 ### 推送流程
 
