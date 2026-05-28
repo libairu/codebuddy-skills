@@ -1,0 +1,142 @@
+{
+  "name": "design-to-code-optimizer",
+  "version": "1.0.0",
+  "organization": "Cocraft",
+  "date": "March 2026",
+  "abstract": "从 Ardot 设计稿到高质量前端代码的完整优化流程。整合 Ardot MCP 设计工具、UI/UX 审查 skills 和代码生成服务，通过 4 阶段流水线（设计审查 → 设计优化 → 代码生成 → 质量检查）确保输出质量。",
+  "dependentSkills": [
+    {
+      "name": "ardot-design-assistant",
+      "relation": "upstream",
+      "trigger": "before_this_skill",
+      "purpose": "生成设计稿，本 skill 处理其下游流程"
+    },
+    {
+      "name": "critique",
+      "relation": "phase1",
+      "trigger": "design_review",
+      "purpose": "设计质量评分和改进建议"
+    },
+    {
+      "name": "web-design-guidelines",
+      "relation": "phase1",
+      "trigger": "design_review",
+      "purpose": "Web 设计规范合规检查"
+    },
+    {
+      "name": "audit",
+      "relation": "phase1",
+      "trigger": "design_review",
+      "purpose": "技术质量审查（无障碍、性能、主题、响应式）"
+    },
+    {
+      "name": "polish",
+      "relation": "phase2",
+      "trigger": "after_critique_score_below_8",
+      "purpose": "界面打磨：对齐、间距、一致性"
+    },
+    {
+      "name": "arrange",
+      "relation": "phase2",
+      "trigger": "layout_issues_detected",
+      "purpose": "布局优化：间距、视觉节奏"
+    },
+    {
+      "name": "typeset",
+      "relation": "phase2",
+      "trigger": "typography_issues_detected",
+      "purpose": "字体排版优化"
+    },
+    {
+      "name": "colorize",
+      "relation": "phase2",
+      "trigger": "color_issues_detected",
+      "purpose": "色彩优化"
+    },
+    {
+      "name": "bolder",
+      "relation": "phase2",
+      "trigger": "visual_impact_low",
+      "purpose": "增强视觉冲击力"
+    },
+    {
+      "name": "adapt",
+      "relation": "phase2_and_phase4",
+      "trigger": "responsive_check",
+      "purpose": "响应式适配检查和修复"
+    },
+    {
+      "name": "distill",
+      "relation": "phase2",
+      "trigger": "design_too_complex",
+      "purpose": "简化设计，去除复杂性"
+    },
+    {
+      "name": "delight",
+      "relation": "phase2",
+      "trigger": "needs_micro_interactions",
+      "purpose": "添加愉悦感和微交互"
+    },
+    {
+      "name": "frontend-design",
+      "relation": "phase3",
+      "trigger": "code_generation",
+      "purpose": "前端设计最佳实践审查"
+    },
+    {
+      "name": "tailwind-design-system",
+      "relation": "phase3",
+      "trigger": "code_generation_tailwind",
+      "purpose": "Tailwind 设计系统规范"
+    },
+    {
+      "name": "shadcn",
+      "relation": "phase3",
+      "trigger": "component_library_needed",
+      "purpose": "shadcn/ui 组件适配"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "relation": "phase3",
+      "trigger": "comprehensive_ui_review",
+      "purpose": "全面 UI/UX 实现审查"
+    },
+    {
+      "name": "vercel-composition-patterns",
+      "relation": "phase3",
+      "trigger": "react_component_structure",
+      "purpose": "React 组合模式优化"
+    },
+    {
+      "name": "react-best-practices",
+      "relation": "phase3",
+      "trigger": "react_performance",
+      "purpose": "React 性能最佳实践"
+    },
+    {
+      "name": "eslint-commit-check",
+      "relation": "phase4",
+      "trigger": "code_quality_check",
+      "purpose": "ESLint 代码规范检查"
+    },
+    {
+      "name": "optimize",
+      "relation": "phase4",
+      "trigger": "performance_check",
+      "purpose": "性能优化诊断"
+    },
+    {
+      "name": "harden",
+      "relation": "phase4",
+      "trigger": "production_readiness",
+      "purpose": "生产环境就绪检查（错误处理、i18n、边界情况）"
+    }
+  ],
+  "suggestedWorkflow": "ardot-design-assistant → critique + audit → polish/arrange/adapt → code-generation (frontend-design + tailwind) → eslint-commit-check + optimize",
+  "phases": {
+    "phase1_review": ["critique", "web-design-guidelines", "audit"],
+    "phase2_optimize": ["polish", "arrange", "typeset", "colorize", "bolder", "adapt", "distill", "delight"],
+    "phase3_codegen": ["frontend-design", "tailwind-design-system", "shadcn", "ui-ux-pro-max", "vercel-composition-patterns", "react-best-practices"],
+    "phase4_quality": ["eslint-commit-check", "adapt", "audit", "optimize", "harden"]
+  }
+}
